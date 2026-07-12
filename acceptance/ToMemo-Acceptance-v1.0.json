@@ -1,0 +1,10 @@
+{
+  "categories": [{"colorAsHex":"4F7CFFFF","id":"8C99AC52-7DBF-4B2F-9AA7-5E647A9646A0","name":"Web Editor 验收","priority":1}],
+  "exportDate": "2026-07-12T11:20:00Z",
+  "notes": [
+    {"categoryId":"8C99AC52-7DBF-4B2F-9AA7-5E647A9646A0","content":"这是一条由 ToMemo Web Editor 生成的普通验收 Memo。","createdAt":"2026-07-12T11:20:00Z","id":"5371BA41-523A-48E1-AC6C-E832D5C61726","title":"普通内容","updatedAt":"2026-07-12T11:20:00Z"},
+    {"categoryId":"8C99AC52-7DBF-4B2F-9AA7-5E647A9646A0","content":"","createdAt":"2026-07-12T11:20:00Z","id":"0DCB0E3D-F7A6-448A-B5B1-8EA499726B0F","title":"空正文","updatedAt":"2026-07-12T11:20:00Z"},
+    {"categoryId":"8C99AC52-7DBF-4B2F-9AA7-5E647A9646A0","content":"{{CLIPBOARD}}\n{{CURSOR}}\n","createdAt":"2026-07-12T11:20:00Z","id":"A4B5B77A-F190-4A60-BF0D-D13F0B55B0DD","title":"动态变量","updatedAt":"2026-07-12T11:20:00Z"}
+  ],
+  "version": "1.0"
+}

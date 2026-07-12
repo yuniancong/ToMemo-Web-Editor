@@ -31,7 +31,7 @@ describe('configuration import workflow', () => {
     await user.upload(screen.getByLabelText('导入 ToMemo 配置'), file)
 
     expect((await screen.findAllByText('终端')).length).toBeGreaterThan(0)
-    expect(screen.getByText('常用路径')).toBeInTheDocument()
+    expect(screen.getAllByText('常用路径').length).toBeGreaterThan(0)
     expect(screen.getByRole('button', { name: /刚刚/ })).toBeInTheDocument()
     expect(screen.getByLabelText('正文')).toHaveValue('{{CLIPBOARD}}\n{{CURSOR}}\n')
     expect(screen.getByText('2 个分类 · 1 条 Memo')).toBeInTheDocument()
