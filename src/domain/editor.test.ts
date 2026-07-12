@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { createNotesInDisplayOrder, deleteCategory } from './editor'
+import { createNotesInDisplayOrder, deleteCategory, reorderCategoryNotes } from './editor'
 import type { ToMemoConfiguration } from './tomemo'
 
 describe('Category deletion', () => {
@@ -42,5 +42,36 @@ describe('AI package display order', () => {
       '2026-07-12T11:59:59Z',
       '2026-07-12T11:59:58Z',
     ])
+  })
+})
+
+describe('manual Memo ordering', () => {
+  it('reorders only the target Category and persists newest-first timestamps', () => {
+    const categoryA = 'AAAAAAAA-AAAA-4AAA-8AAA-AAAAAAAAAAAA'
+    const categoryB = 'BBBBBBBB-BBBB-4BBB-8BBB-BBBBBBBBBBBB'
+    const makeNote = (id: string, categoryId: string, title: string) => ({ id, categoryId, title, content: title, createdAt: '2026-01-01T00:00:00Z', updatedAt: '2026-01-01T00:00:00Z' })
+    const configuration: ToMemoConfiguration = {
+      categories: [
+        { id: categoryA, name: 'A', colorAsHex: '5A656FFF', priority: 1 },
+        { id: categoryB, name: 'B', colorAsHex: '4F7CFFFF', priority: 2 },
+      ],
+      notes: [
+        makeNote('11111111-1111-4111-8111-111111111111', categoryA, 'A1'),
+        makeNote('99999999-9999-4999-8999-999999999999', categoryB, 'B1'),
+        makeNote('22222222-2222-4222-8222-222222222222', categoryA, 'A2'),
+        makeNote('33333333-3333-4333-8333-333333333333', categoryA, 'A3'),
+      ], exportDate: '2026-07-12T00:00:00Z', version: '1.0',
+    }
+    const result = reorderCategoryNotes(configuration, categoryA, [
+      '33333333-3333-4333-8333-333333333333',
+      '11111111-1111-4111-8111-111111111111',
+      '22222222-2222-4222-8222-222222222222',
+    ], new Date('2026-07-12T12:00:00Z'))
+
+    expect(result.notes.map((note) => note.title)).toEqual(['A3', 'B1', 'A1', 'A2'])
+    expect(result.notes.filter((note) => note.categoryId === categoryA).map((note) => note.createdAt)).toEqual([
+      '2026-07-12T12:00:00Z', '2026-07-12T11:59:59Z', '2026-07-12T11:59:58Z',
+    ])
+    expect(result.notes.find((note) => note.categoryId === categoryB)?.createdAt).toBe('2026-01-01T00:00:00Z')
   })
 })

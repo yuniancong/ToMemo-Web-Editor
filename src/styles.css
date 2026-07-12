@@ -75,6 +75,14 @@ kbd { padding: 2px 5px; border: 1px solid #d8dce1; border-radius: 4px; backgroun
 .compact-control { height: 29px; display: flex; align-items: center; gap: 5px; padding: 0 8px; border: 1px solid var(--border); border-radius: 7px; color: #59616d; background: white; font-size: 10px; }
 .compact-control select { border: 0; outline: 0; color: inherit; background: transparent; font-size: inherit; }
 .memo-list { padding: 0 8px 12px; }
+.drop-indicator { position: relative; z-index: 4; height: 0; margin: 0 8px; pointer-events: none; transition: height 100ms ease; }
+.drop-indicator.active { height: 14px; }
+.drop-indicator.active::before { content: ""; position: absolute; top: 6px; left: 0; right: 0; height: 2px; border-radius: 2px; background: var(--blue); box-shadow: 0 0 0 1px rgba(23,105,224,.08); }
+.drop-indicator.active::after { content: ""; position: absolute; top: 3px; left: -1px; width: 8px; height: 8px; border: 2px solid white; border-radius: 50%; background: var(--blue); box-shadow: 0 0 0 1px var(--blue); }
+.drop-indicator.trailing { min-height: 10px; pointer-events: auto; }
+.drop-indicator.trailing.active { height: 18px; }
+.memo-row[draggable="true"] { cursor: grab; }
+.memo-row[draggable="true"]:active { cursor: grabbing; opacity: .72; }
 .memo-row { width: 100%; display: grid; grid-template-columns: 28px 1fr; gap: 5px; padding: 12px 9px; border: 0; border-bottom: 1px solid #edf0f2; background: transparent; text-align: left; cursor: pointer; }
 .memo-row:hover { background: #f8f9fa; }
 .memo-row.selected { margin-top: -1px; border: 1px solid #b9d3fb; border-radius: 8px; background: #f0f6ff; box-shadow: 0 1px 2px rgba(23,105,224,.05); }

@@ -39,6 +39,29 @@ export function createNotesInDisplayOrder(
   return { ...configuration, notes: [...configuration.notes, ...notes] }
 }
 
+export function reorderCategoryNotes(
+  configuration: ToMemoConfiguration,
+  categoryId: string,
+  orderedIds: string[],
+  baseTime = new Date(),
+) {
+  const categoryNotes = configuration.notes.filter((note) => note.categoryId === categoryId)
+  if (orderedIds.length !== categoryNotes.length || new Set(orderedIds).size !== categoryNotes.length) return configuration
+  const byId = new Map(categoryNotes.map((note) => [note.id, note]))
+  if (orderedIds.some((id) => !byId.has(id))) return configuration
+
+  const reordered = orderedIds.map((id, index) => {
+    const note = byId.get(id)!
+    const timestamp = new Date(baseTime.getTime() - index * 1000).toISOString().replace('.000Z', 'Z')
+    return { ...note, createdAt: timestamp, updatedAt: timestamp }
+  })
+  let categoryIndex = 0
+  return {
+    ...configuration,
+    notes: configuration.notes.map((note) => note.categoryId === categoryId ? reordered[categoryIndex++] : note),
+  }
+}
+
 export function updateNote(configuration: ToMemoConfiguration, id: string, patch: Pick<ToMemoNote, 'title' | 'content' | 'categoryId'>) {
   return {
     ...configuration,

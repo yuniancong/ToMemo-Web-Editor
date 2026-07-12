@@ -1,6 +1,11 @@
 # ToMemo Web Editor
 
-一个本地优先的 ToMemo 配置可视化编辑器。它让你在电脑浏览器中管理分类和 Memo、批量处理内容、导入 AI 生成的内容包，并导出可以回到手机 ToMemo 使用的 JSON。
+面向 ToMemo 的本地优先配置工作台：在桌面浏览器中可视化管理分类与 Memo，将 ChatGPT 等 AI 生成的结构化内容安全转换为真实 ToMemo 配置，并完成可验证的手机端回导。
+
+[![Release](https://img.shields.io/github/v/release/yuniancong/ToMemo-Web-Editor)](https://github.com/yuniancong/ToMemo-Web-Editor/releases)
+[![License](https://img.shields.io/github/license/yuniancong/ToMemo-Web-Editor)](LICENSE)
+[![React](https://img.shields.io/badge/React-19-149ECA)](https://react.dev/)
+[![Local First](https://img.shields.io/badge/data-local--first-1769E0)](#数据安全)
 
 > 本项目是社区工具，与 ToMemo 官方无隶属关系。ToMemo 官网：https://tomemo.top/
 
@@ -13,6 +18,7 @@
 - Command 点击追加选择、Shift 点击连续选择、Command-A 全选。
 - 批量移动、复制、删除、标题处理和 AI 内容包导出。
 - 按标题、创建时间、更新时间或原始顺序查看。
+- 拖动单条或多条 Memo 到插入线位置，并将顺序持久化到最终配置。
 - 插入已验证的 `{{CLIPBOARD}}` 和 `{{CURSOR}}` 动态变量。
 - 本地自动保存、撤销和重做。
 - 导出前检查 UUID、颜色、时间和分类引用。
@@ -125,6 +131,25 @@ AI 不需要、也不应该生成 UUID、`categoryId`、创建时间或更新时
 - 使用本工具生成的验收配置已成功导入，没有干扰手机中原有数据。
 
 删除分类时，本工具会同时删除该分类下的全部 Memo，不会自动移动到其他分类。
+
+### 排序如何持久化
+
+网页显示顺序来自配置中的 `notes` 数组，而 ToMemo 手机端还会依据时间排序。手动拖动后，本工具会同时：
+
+1. 改写当前分类在 `notes` 数组中的顺序；
+2. 按页面从上到下生成相差 1 秒的阶梯时间；
+3. 保持其他分类的 Memo 和时间不变。
+
+因此导出的配置在手机 ToMemo 中仍能保持拖动后的顺序。
+
+## 技术设计
+
+- React + TypeScript + Vite。
+- 独立 ToMemo codec，负责结构、引用、颜色、UUID 和时间校验。
+- 独立 AI 内容包 codec，不允许 AI 直接生成 ToMemo 内部标识。
+- 浏览器本地持久化，无服务端依赖。
+- Service Worker 提供同源资源离线缓存。
+- Vitest 与 Testing Library 覆盖配置往返、AI 导入、级联删除、排序和快捷键行为。
 
 ## 已确认的 ToMemo 1.0 格式
 
