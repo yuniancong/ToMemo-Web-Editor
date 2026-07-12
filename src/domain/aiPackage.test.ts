@@ -17,4 +17,29 @@ describe('AI content package codec', () => {
     expect(normalizeAiColor('red')).toBe('5A656FFF')
     expect(normalizeAiColor('#123')).toBe('5A656FFF')
   })
+
+  it('repairs common AI output with unescaped quotes inside shell commands', () => {
+    const malformed = `{
+      "format": "tomemo-content-package",
+      "version": "1.0",
+      "packageName": "mac 端常用路径",
+      "items": [
+        {
+          "title": "桌面",
+          "content": "cd "/Users/yuniancong/Desktop""
+        },
+        {
+          "title": "下载",
+          "content": "cd "/Users/yuniancong/Downloads""
+        }
+      ]
+    }`
+    const result = parseAiPackage(malformed)
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    expect(result.value.items).toEqual([
+      { title: '桌面', content: 'cd "/Users/yuniancong/Desktop"' },
+      { title: '下载', content: 'cd "/Users/yuniancong/Downloads"' },
+    ])
+  })
 })

@@ -1,3 +1,5 @@
+import { jsonrepair } from 'jsonrepair'
+
 export type AiContentPackage = {
   format: 'tomemo-content-package'
   version: '1.0'
@@ -13,12 +15,23 @@ export const normalizeAiColor = (value?: string) => {
   return normalized && /^[0-9A-F]{8}$/.test(normalized) ? normalized : '5A656FFF'
 }
 
+const repairUnescapedItemQuotes = (source: string) => source.replace(
+  /^(\s*"(?:title|content)"\s*:\s*")(.*)("\s*,?\s*)$/gm,
+  (_line, prefix: string, value: string, suffix: string) => `${prefix}${value.replace(/(?<!\\)"/g, '\\"')}${suffix}`,
+)
+
 export function parseAiPackage(source: string): AiPackageResult {
   const fenced = source.match(/```(?:json)?\s*([\s\S]*?)```/i)
   const json = fenced?.[1]?.trim() ?? source.trim()
   let value: unknown
-  try { value = JSON.parse(json) } catch (error) {
-    return { ok: false, error: `JSON 无法解析：${error instanceof Error ? error.message : '未知错误'}` }
+  try {
+    value = JSON.parse(json)
+  } catch (originalError) {
+    try {
+      value = JSON.parse(jsonrepair(repairUnescapedItemQuotes(json)))
+    } catch {
+      return { ok: false, error: `JSON 无法解析：${originalError instanceof Error ? originalError.message : '未知错误'}` }
+    }
   }
   if (!value || typeof value !== 'object' || Array.isArray(value)) return { ok: false, error: '内容包顶层必须是对象' }
   const candidate = value as Record<string, unknown>

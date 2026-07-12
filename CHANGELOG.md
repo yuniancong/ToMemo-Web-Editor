@@ -2,6 +2,21 @@
 
 本项目遵循 [Semantic Versioning](https://semver.org/)。
 
+## [1.1.2] - 2026-07-12
+
+### Added
+
+- AI 内容包解析增加 JSON 容错修复，可处理 shell 路径中常见的未转义双引号。
+
+### Changed
+
+- 强化 ChatGPT Projects 知识库中的 JSON 字符串转义规则、正确示例和自检条目。
+
+### Validation
+
+- 增加包含 `cd "/Users/..."` 非法原始输出的回归测试。
+- 自动化测试和生产构建通过。
+
 ## [1.1.1] - 2026-07-12
 
 ### Fixed

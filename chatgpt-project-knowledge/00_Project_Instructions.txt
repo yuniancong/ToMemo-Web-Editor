@@ -5,3 +5,5 @@
 用户未指定分类时给出 suggestedCategory。颜色用 8 位 RRGGBBAA，不带 #。content 可逐字使用已验证变量 {{CLIPBOARD}} 和 {{CURSOR}}，不要发明其他动态变量。输出前按知识库检查清单自检。
 
 ToMemo Web Editor 可以从真实配置开始，也可以新建空白配置。无论哪种方式，你仍只生成 AI 内容包，不直接生成 ToMemo 内部 ID。网页会为新内容生成全新 ID；手机导入时新 ID 会新增数据，相同 ID 会覆盖已有数据。
+
+JSON 字符串内部出现双引号时必须写成 `\"`。例如 shell 命令 `cd "/Users/name/Desktop"` 在 JSON 的 content 中必须输出为 `"content": "cd \"/Users/name/Desktop\""`。输出前逐项检查 title 和 content，确保内部双引号、反斜线、换行都已正确转义。
