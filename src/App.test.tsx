@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import App from './App'
@@ -69,5 +69,15 @@ describe('configuration import workflow', () => {
     expect(screen.getAllByText('新分类').length).toBeGreaterThan(0)
     expect(screen.getByText('1 个分类 · 0 条 Memo')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /导出 ToMemo/ })).toBeEnabled()
+  })
+
+  it('imports a complete ToMemo configuration pasted as JSON text', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await user.click(screen.getByRole('button', { name: /粘贴配置/ }))
+    fireEvent.change(screen.getByLabelText('完整 ToMemo JSON 配置'), { target: { value: JSON.stringify(fixture) } })
+    await user.click(screen.getByRole('button', { name: /校验并导入/ }))
+    expect(await screen.findByText('2 个分类 · 1 条 Memo')).toBeInTheDocument()
+    expect(screen.getByText('粘贴的配置.json')).toBeInTheDocument()
   })
 })
