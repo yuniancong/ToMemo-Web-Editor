@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { exportConfiguration, parseConfiguration } from './tomemo'
+import { createBlankConfiguration, exportConfiguration, parseConfiguration } from './tomemo'
 import baselineFixture from '../test/fixtures/baseline-export.json'
 import changedFixture from '../test/fixtures/changed-export.json'
 
@@ -87,5 +87,11 @@ describe('ToMemo configuration codec', () => {
     const invalid = { ...observedExport, exportDate: 'not-a-date' }
     const result = parseConfiguration(JSON.stringify(invalid))
     expect(result).toEqual({ ok: false, errors: ['exportDate 必须是 UTC ISO 8601 时间'] })
+  })
+
+  it('creates a valid empty configuration for standalone generation', () => {
+    const blank = createBlankConfiguration(new Date('2026-07-12T12:00:00Z'))
+    expect(blank).toEqual({ categories: [], exportDate: '2026-07-12T12:00:00Z', notes: [], version: '1.0' })
+    expect(parseConfiguration(JSON.stringify(blank))).toEqual({ ok: true, configuration: blank, warnings: [] })
   })
 })

@@ -82,4 +82,4 @@ Work the **frontier**: any ticket whose blockers are complete may start.
 - [ ] Report structural differences before final ToMemo export.
 - [ ] Run codec, interaction, persistence, and production-build verification.
 - [ ] Generate an acceptance configuration containing ordinary, empty-content, and verified dynamic-variable Memos.
-- [ ] Record the real mobile import result and any follow-up codec correction.
+- [x] Record the real mobile import result and any follow-up codec correction.

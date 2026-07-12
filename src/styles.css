@@ -49,6 +49,7 @@ kbd { padding: 2px 5px; border: 1px solid #d8dce1; border-radius: 4px; backgroun
 .empty-state h1 { margin: 0 0 9px; font-size: 22px; letter-spacing: -.025em; }
 .empty-state p { max-width: 400px; margin: 0 0 24px; color: var(--muted); text-align: center; font-size: 13px; line-height: 1.65; }
 .drop-hint { margin-top: 12px; color: #9299a4; font-size: 11px; }
+.empty-actions { display: flex; gap: 8px; }
 .privacy-note { display: flex; align-items: center; gap: 5px; margin-top: 38px; color: #6f7782; font-size: 11px; }
 
 .workspace-grid { min-height: 0; display: grid; grid-template-columns: 236px minmax(330px, 420px) minmax(390px, 1fr); gap: 1px; background: var(--border); }

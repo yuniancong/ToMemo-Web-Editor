@@ -122,3 +122,12 @@ export function exportConfiguration(
 export function rgbaHexToCss(value: string): string {
   return `#${value}`
 }
+
+export function createBlankConfiguration(now = new Date()): ToMemoConfiguration {
+  return {
+    categories: [],
+    exportDate: now.toISOString().replace('.000Z', 'Z'),
+    notes: [],
+    version: '1.0',
+  }
+}

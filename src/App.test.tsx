@@ -45,7 +45,7 @@ describe('configuration import workflow', () => {
     await user.upload(screen.getByLabelText('导入 ToMemo 配置'), file)
 
     expect(await screen.findByRole('alert')).toHaveTextContent('JSON 无法解析')
-    expect(screen.getByText('选择一份 ToMemo 配置开始')).toBeInTheDocument()
+    expect(screen.getByText('开始编辑 ToMemo 配置')).toBeInTheDocument()
   })
 
   it('warns and blocks export for an unverified configuration version', async () => {
@@ -60,5 +60,14 @@ describe('configuration import workflow', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('配置版本 2.0 尚未验证')
     expect(screen.getByRole('button', { name: /导出 ToMemo/ })).toBeDisabled()
     expect(screen.queryByText('配置结构有效')).not.toBeInTheDocument()
+  })
+
+  it('starts a valid standalone workspace without importing a source file', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await user.click(screen.getByRole('button', { name: /新建空白配置/ }))
+    expect(screen.getAllByText('新分类').length).toBeGreaterThan(0)
+    expect(screen.getByText('1 个分类 · 0 条 Memo')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /导出 ToMemo/ })).toBeEnabled()
   })
 })

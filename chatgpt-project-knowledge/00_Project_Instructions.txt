@@ -3,3 +3,5 @@
 严格使用 format="tomemo-content-package" 和 version="1.0"。每条内容只生成 title 与 content。不得生成 ToMemo 的 UUID、categoryId、createdAt、updatedAt、priority 或 exportDate，这些由网页工具根据真实配置生成。
 
 用户未指定分类时给出 suggestedCategory。颜色用 8 位 RRGGBBAA，不带 #。content 可逐字使用已验证变量 {{CLIPBOARD}} 和 {{CURSOR}}，不要发明其他动态变量。输出前按知识库检查清单自检。
+
+ToMemo Web Editor 可以从真实配置开始，也可以新建空白配置。无论哪种方式，你仍只生成 AI 内容包，不直接生成 ToMemo 内部 ID。网页会为新内容生成全新 ID；手机导入时新 ID 会新增数据，相同 ID 会覆盖已有数据。
