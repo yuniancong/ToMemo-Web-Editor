@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type DragEvent, type MouseEvent } from 'react'
 import { Braces, Check, CheckCircle2, ChevronDown, Clipboard, Copy, Download, FileJson, FolderOpen, Import, ListFilter, MoreHorizontal, Move, Plus, Redo2, Search, ShieldCheck, Trash2, Undo2, UploadCloud, X } from 'lucide-react'
 import { normalizeAiColor, parseAiPackage, type AiContentPackage } from './domain/aiPackage'
-import { createCategory, createNote, deleteCategory, deleteNotes, duplicateConflict, moveNotes, updateNote } from './domain/editor'
+import { createCategory, createNote, createNotesInDisplayOrder, deleteCategory, deleteNotes, duplicateConflict, moveNotes, updateNote } from './domain/editor'
 import { createBlankConfiguration, exportConfiguration, parseConfiguration, rgbaHexToCss, type ToMemoConfiguration } from './domain/tomemo'
 
 type Workspace = { fileName: string; configuration: ToMemoConfiguration; warnings: string[] }
@@ -150,7 +150,8 @@ export default function App() {
     let next = config; let target = next.categories.find((item) => item.name === aiTarget)
     if (!target) { const created = createCategory(next, aiTarget || aiPackage.suggestedCategory?.name || aiPackage.packageName, normalizeAiColor(aiPackage.suggestedCategory?.color)); next = created.configuration; target = created.category }
     const existing = next.notes.filter((item) => item.categoryId === target!.id)
-    for (const item of aiPackage.items) { if (duplicateConflict(item, existing).kind === 'exact') continue; next = createNote(next, target.id, item.title, item.content).configuration }
+    const newItems = aiPackage.items.filter((item) => duplicateConflict(item, existing).kind !== 'exact')
+    next = createNotesInDisplayOrder(next, target.id, newItems)
     commit(next); setCategoryId(target.id); setAiOpen(false); setAiPackage(null); setAiSource('')
   }
 

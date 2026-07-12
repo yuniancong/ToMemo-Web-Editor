@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { deleteCategory } from './editor'
+import { createNotesInDisplayOrder, deleteCategory } from './editor'
 import type { ToMemoConfiguration } from './tomemo'
 
 describe('Category deletion', () => {
@@ -21,5 +21,26 @@ describe('Category deletion', () => {
     expect(result.categories.map((item) => item.name)).toEqual(['保留'])
     expect(result.notes.map((item) => item.title)).toEqual(['保留'])
     expect(result.notes[0].categoryId).toBe('BBBBBBBB-BBBB-4BBB-8BBB-BBBBBBBBBBBB')
+  })
+})
+
+describe('AI package display order', () => {
+  it('assigns descending timestamps so ToMemo newest-first order matches the page', () => {
+    const configuration: ToMemoConfiguration = {
+      categories: [{ id: 'AAAAAAAA-AAAA-4AAA-8AAA-AAAAAAAAAAAA', name: '开发指令', colorAsHex: '5A656FFF', priority: 1 }],
+      notes: [], exportDate: '2026-07-12T00:00:00Z', version: '1.0',
+    }
+    const result = createNotesInDisplayOrder(configuration, configuration.categories[0].id, [
+      { title: '第一条', content: '/first' },
+      { title: '第二条', content: '/second' },
+      { title: '第三条', content: '/third' },
+    ], new Date('2026-07-12T12:00:00Z'))
+
+    expect(result.notes.map((note) => note.title)).toEqual(['第一条', '第二条', '第三条'])
+    expect(result.notes.map((note) => note.createdAt)).toEqual([
+      '2026-07-12T12:00:00Z',
+      '2026-07-12T11:59:59Z',
+      '2026-07-12T11:59:58Z',
+    ])
   })
 })

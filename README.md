@@ -101,6 +101,8 @@ npm run preview
 
 AI 不需要、也不应该生成 UUID、`categoryId`、创建时间或更新时间；网页会在确认导入时生成符合真实 ToMemo 配置的内部字段。
 
+批量导入时，网页会按页面从上到下为新 Memo 生成相差 1 秒的阶梯时间，使 ToMemo 按最新时间排序后的顺序与网页预览一致。
+
 ### ChatGPT Projects
 
 仓库中的 `chatgpt-project-knowledge/` 是完整知识库：

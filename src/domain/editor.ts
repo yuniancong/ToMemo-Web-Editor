@@ -19,6 +19,26 @@ export function createNote(configuration: ToMemoConfiguration, categoryId: strin
   return { configuration: { ...configuration, notes: [...configuration.notes, note] }, note }
 }
 
+export function createNotesInDisplayOrder(
+  configuration: ToMemoConfiguration,
+  categoryId: string,
+  items: Array<{ title: string; content: string }>,
+  baseTime = new Date(),
+) {
+  const notes = items.map((item, index): ToMemoNote => {
+    const timestamp = new Date(baseTime.getTime() - index * 1000).toISOString().replace('.000Z', 'Z')
+    return {
+      categoryId,
+      content: item.content,
+      createdAt: timestamp,
+      id: newId(),
+      title: item.title,
+      updatedAt: timestamp,
+    }
+  })
+  return { ...configuration, notes: [...configuration.notes, ...notes] }
+}
+
 export function updateNote(configuration: ToMemoConfiguration, id: string, patch: Pick<ToMemoNote, 'title' | 'content' | 'categoryId'>) {
   return {
     ...configuration,
@@ -64,4 +84,3 @@ export function duplicateConflict(note: Pick<ToMemoNote, 'title' | 'content'>, e
   if (content) return { kind: 'content' as const, note: content }
   return { kind: 'none' as const }
 }
-
