@@ -1,0 +1,50 @@
+import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { describe, expect, it } from 'vitest'
+import App from './App'
+
+const fixture = {
+  categories: [
+    { colorAsHex: '5A656FFF', id: '4BB0FABD-1B2C-4271-84F7-D617DBE49EBF', name: '终端', priority: 1 },
+    { colorAsHex: '17C657FF', id: 'EF16F84C-851C-4885-89D5-04947EAE1BFA', name: '常用路径', priority: 2 },
+  ],
+  exportDate: '2026-07-12T10:15:22Z',
+  notes: [
+    {
+      categoryId: '4BB0FABD-1B2C-4271-84F7-D617DBE49EBF',
+      content: '{{CLIPBOARD}}\n{{CURSOR}}\n',
+      createdAt: '2026-07-12T10:14:50Z',
+      id: 'D610206D-B57C-4F26-A80C-10EBEECFF569',
+      title: '刚刚',
+      updatedAt: '2026-07-12T10:14:50Z',
+    },
+  ],
+  version: '1.0',
+}
+
+describe('configuration import workflow', () => {
+  it('shows imported Categories, Memos, and the selected Memo detail', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    const file = new File([JSON.stringify(fixture)], 'ToMemo-Export.json', { type: 'application/json' })
+    await user.upload(screen.getByLabelText('导入 ToMemo 配置'), file)
+
+    expect((await screen.findAllByText('终端')).length).toBeGreaterThan(0)
+    expect(screen.getByText('常用路径')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /刚刚/ })).toBeInTheDocument()
+    expect(screen.getByLabelText('正文')).toHaveValue('{{CLIPBOARD}}\n{{CURSOR}}\n')
+    expect(screen.getByText('2 个分类 · 1 条 Memo')).toBeInTheDocument()
+  })
+
+  it('shows a precise error instead of replacing the current screen', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    const file = new File(['{ nope'], 'broken.json', { type: 'application/json' })
+    await user.upload(screen.getByLabelText('导入 ToMemo 配置'), file)
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('JSON 无法解析')
+    expect(screen.getByText('选择一份 ToMemo 配置开始')).toBeInTheDocument()
+  })
+})

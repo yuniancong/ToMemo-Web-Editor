@@ -1,0 +1,71 @@
+import { describe, expect, it } from 'vitest'
+import { exportConfiguration, parseConfiguration } from './tomemo'
+
+const observedExport = {
+  categories: [
+    {
+      colorAsHex: '5A656FFF',
+      id: '4BB0FABD-1B2C-4271-84F7-D617DBE49EBF',
+      name: '终端',
+      priority: 1,
+      futureCategoryField: { keep: true },
+    },
+  ],
+  exportDate: '2026-07-12T10:15:22Z',
+  notes: [
+    {
+      categoryId: '4BB0FABD-1B2C-4271-84F7-D617DBE49EBF',
+      content: '{{CLIPBOARD}}\n{{CURSOR}}\n',
+      createdAt: '2026-07-12T10:14:50Z',
+      id: 'D610206D-B57C-4F26-A80C-10EBEECFF569',
+      title: '刚刚',
+      updatedAt: '2026-07-12T10:14:50Z',
+      futureMemoField: 'keep me',
+    },
+  ],
+  version: '1.0',
+  futureTopLevelField: ['keep me'],
+}
+
+describe('ToMemo configuration codec', () => {
+  it('accepts an observed 1.0 export and preserves unknown fields', () => {
+    const result = parseConfiguration(JSON.stringify(observedExport))
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    expect(result.configuration).toEqual(observedExport)
+    expect(result.warnings).toEqual([])
+  })
+
+  it('reports precise structural and referential errors', () => {
+    const invalid = structuredClone(observedExport)
+    invalid.categories[0].colorAsHex = '#5A656F'
+    invalid.notes[0].categoryId = '00000000-0000-0000-0000-000000000000'
+
+    const result = parseConfiguration(JSON.stringify(invalid))
+
+    expect(result.ok).toBe(false)
+    if (result.ok) return
+    expect(result.errors).toEqual([
+      'categories[0].colorAsHex 必须是 8 位 RRGGBBAA 十六进制颜色（不含 #）',
+      'notes[0].categoryId 未引用任何现有分类',
+    ])
+  })
+
+  it('refreshes exportDate without changing existing identities or timestamps', () => {
+    const result = parseConfiguration(JSON.stringify(observedExport))
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+
+    const exported = exportConfiguration(
+      result.configuration,
+      new Date('2026-08-01T01:02:03Z'),
+    )
+
+    expect(exported.exportDate).toBe('2026-08-01T01:02:03Z')
+    expect(exported.categories[0].id).toBe(observedExport.categories[0].id)
+    expect(exported.notes[0].createdAt).toBe(observedExport.notes[0].createdAt)
+    expect(exported.notes[0].updatedAt).toBe(observedExport.notes[0].updatedAt)
+    expect(exported.futureTopLevelField).toEqual(['keep me'])
+  })
+})
