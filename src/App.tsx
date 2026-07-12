@@ -125,15 +125,15 @@ export default function App() {
     if (!config || !categoryId || readOnly) return; const result = createNote(config, categoryId, '新 Memo', ''); commit(result.configuration); setNoteId(result.note.id); setSelected(new Set([result.note.id]))
   }
   function removeCategory() {
-    if (!config || !categoryId || config.categories.length < 2 || readOnly) return
+    if (!config || !categoryId || readOnly) return
     const containing = config.notes.filter((item) => item.categoryId === categoryId)
     const others = config.categories.filter((item) => item.id !== categoryId)
-    const message = containing.length ? `该分类有 ${containing.length} 条 Memo。输入另一个分类名称可移动后删除；留空将连同 Memo 删除。` : '确认删除这个分类？'
-    const answer = containing.length ? window.prompt(message, others[0]?.name) : (window.confirm(message) ? '' : null)
-    if (answer === null) return
-    const target = others.find((item) => item.name === answer)?.id
-    if (!target && containing.length && !window.confirm(`将永久删除分类及其中 ${containing.length} 条 Memo。确认继续？`)) return
-    commit(deleteCategory(config, categoryId, target)); setCategoryId(others[0]?.id ?? null); setNoteId(null); setSelected(new Set())
+    const categoryName = config.categories.find((item) => item.id === categoryId)?.name ?? '未命名分类'
+    const message = containing.length
+      ? `确认删除分类“${categoryName}”及其中全部 ${containing.length} 条 Memo？此操作不会把 Memo 移动到其他分类。`
+      : `确认删除空分类“${categoryName}”？`
+    if (!window.confirm(message)) return
+    commit(deleteCategory(config, categoryId)); setCategoryId(others[0]?.id ?? null); setNoteId(null); setSelected(new Set())
   }
   function batchMove(copy = false) {
     if (!config || !selected.size || readOnly) return; const name = window.prompt(copy ? '复制到分类（输入名称）' : '移动到分类（输入名称）')
