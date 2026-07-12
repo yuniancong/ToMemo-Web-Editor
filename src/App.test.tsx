@@ -47,4 +47,18 @@ describe('configuration import workflow', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('JSON 无法解析')
     expect(screen.getByText('选择一份 ToMemo 配置开始')).toBeInTheDocument()
   })
+
+  it('warns and blocks export for an unverified configuration version', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    const unverified = { ...fixture, version: '2.0' }
+    await user.upload(
+      screen.getByLabelText('导入 ToMemo 配置'),
+      new File([JSON.stringify(unverified)], 'future.json', { type: 'application/json' }),
+    )
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('配置版本 2.0 尚未验证')
+    expect(screen.getByRole('button', { name: /导出 ToMemo/ })).toBeDisabled()
+    expect(screen.queryByText('配置结构有效')).not.toBeInTheDocument()
+  })
 })

@@ -1,0 +1,11 @@
+{
+  "categories": [
+    { "colorAsHex": "5A656FFF", "id": "4BB0FABD-1B2C-4271-84F7-D617DBE49EBF", "name": "终端", "priority": 1 },
+    { "colorAsHex": "17C657FF", "id": "EF16F84C-851C-4885-89D5-04947EAE1BFA", "name": "桌面端", "priority": 10 }
+  ],
+  "exportDate": "2026-07-12T09:53:54Z",
+  "notes": [
+    { "categoryId": "4BB0FABD-1B2C-4271-84F7-D617DBE49EBF", "content": "echo example", "createdAt": "2026-07-03T12:22:38Z", "id": "778627EF-DEEB-440D-8E03-269694BCD98B", "title": "示例命令", "updatedAt": "2026-07-03T12:31:24Z" }
+  ],
+  "version": "1.0"
+}

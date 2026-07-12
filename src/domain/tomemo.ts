@@ -53,7 +53,7 @@ export function parseConfiguration(source: string): ParseResult {
 
   if (!Array.isArray(categories)) errors.push('categories 必须是数组')
   if (!Array.isArray(notes)) errors.push('notes 必须是数组')
-  if (typeof value.exportDate !== 'string') errors.push('exportDate 必须是字符串')
+  if (!isIsoDate(value.exportDate)) errors.push('exportDate 必须是 UTC ISO 8601 时间')
   if (typeof value.version !== 'string') errors.push('version 必须是字符串')
   if (errors.length > 0 || !Array.isArray(categories) || !Array.isArray(notes)) {
     return { ok: false, errors }

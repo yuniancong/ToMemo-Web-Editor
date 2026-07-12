@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { exportConfiguration, parseConfiguration } from './tomemo'
+import baselineFixture from '../test/fixtures/baseline-export.json'
+import changedFixture from '../test/fixtures/changed-export.json'
 
 const observedExport = {
   categories: [
@@ -67,5 +69,23 @@ describe('ToMemo configuration codec', () => {
     expect(exported.notes[0].createdAt).toBe(observedExport.notes[0].createdAt)
     expect(exported.notes[0].updatedAt).toBe(observedExport.notes[0].updatedAt)
     expect(exported.futureTopLevelField).toEqual(['keep me'])
+  })
+
+  it.each([
+    ['baseline real-export derivative', baselineFixture],
+    ['changed real-export derivative', changedFixture],
+  ])('round-trips the %s without unintended loss', (_name, fixture) => {
+    const parsed = parseConfiguration(JSON.stringify(fixture))
+    expect(parsed.ok).toBe(true)
+    if (!parsed.ok) return
+
+    const exported = exportConfiguration(parsed.configuration, new Date(fixture.exportDate))
+    expect(exported).toEqual(fixture)
+  })
+
+  it('rejects an invalid exportDate', () => {
+    const invalid = { ...observedExport, exportDate: 'not-a-date' }
+    const result = parseConfiguration(JSON.stringify(invalid))
+    expect(result).toEqual({ ok: false, errors: ['exportDate 必须是 UTC ISO 8601 时间'] })
   })
 })

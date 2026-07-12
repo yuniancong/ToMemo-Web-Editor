@@ -57,6 +57,7 @@ export default function App() {
   const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isDragging, setIsDragging] = useState(false)
+  const [showValidation, setShowValidation] = useState(false)
 
   const selectedCategory = workspace?.configuration.categories.find(
     (category) => category.id === selectedCategoryId,
@@ -80,6 +81,7 @@ export default function App() {
     const firstCategory = result.configuration.categories[0]
     const firstNote = result.configuration.notes.find((note) => note.categoryId === firstCategory?.id)
     setWorkspace({ fileName: file.name, configuration: result.configuration, warnings: result.warnings })
+    setShowValidation(false)
     setSelectedCategoryId(firstCategory?.id ?? null)
     setSelectedNoteId(firstNote?.id ?? null)
   }
@@ -87,6 +89,18 @@ export default function App() {
   const counts = workspace
     ? `${workspace.configuration.categories.length} 个分类 · ${workspace.configuration.notes.length} 条 Memo`
     : '尚未载入配置'
+
+  const dropHandlers = {
+    onDragEnter: (event: React.DragEvent) => { event.preventDefault(); setIsDragging(true) },
+    onDragOver: (event: React.DragEvent) => event.preventDefault(),
+    onDragLeave: () => setIsDragging(false),
+    onDrop: (event: React.DragEvent) => {
+      event.preventDefault()
+      setIsDragging(false)
+      const file = event.dataTransfer.files[0]
+      if (file) void loadFile(file)
+    },
+  }
 
   return (
     <main className="app-shell">
@@ -122,10 +136,10 @@ export default function App() {
             <Import size={15} /> 导入配置
           </button>
           <button className="button secondary" disabled><FileJson size={15} /> AI 内容包</button>
-          <button className="button secondary" disabled={!workspace}><ShieldCheck size={15} /> 校验</button>
+          <button className="button secondary" disabled={!workspace} onClick={() => setShowValidation((value) => !value)}><ShieldCheck size={15} /> 校验</button>
           <button
             className="button primary"
-            disabled={!workspace}
+            disabled={!workspace || workspace.warnings.length > 0}
             onClick={() => workspace && downloadConfiguration(workspace.configuration)}
           >
             <Download size={15} /> 导出 ToMemo
@@ -134,19 +148,24 @@ export default function App() {
       </header>
 
       {error && <div className="error-banner" role="alert">{error}</div>}
+      {workspace && workspace.warnings.length > 0 && (
+        <div className="warning-banner" role="alert">
+          {workspace.warnings.join('；')}。为避免损坏数据，当前版本仅可查看，不能导出。
+        </div>
+      )}
+      {showValidation && workspace && (
+        <section className="validation-popover" aria-label="配置校验报告">
+          <div className="validation-title"><ShieldCheck size={16} /> 配置校验报告</div>
+          <strong>{workspace.warnings.length > 0 ? '兼容性警告' : '结构校验通过'}</strong>
+          <p>{workspace.configuration.categories.length} 个分类、{workspace.configuration.notes.length} 条 Memo；ID、颜色、时间和分类引用均符合已确认规则。</p>
+          {workspace.warnings.map((warning) => <p className="validation-warning" key={warning}>{warning}</p>)}
+        </section>
+      )}
 
       {!workspace ? (
         <section
           className={`empty-state ${isDragging ? 'dragging' : ''}`}
-          onDragEnter={(event) => { event.preventDefault(); setIsDragging(true) }}
-          onDragOver={(event) => event.preventDefault()}
-          onDragLeave={() => setIsDragging(false)}
-          onDrop={(event) => {
-            event.preventDefault()
-            setIsDragging(false)
-            const file = event.dataTransfer.files[0]
-            if (file) void loadFile(file)
-          }}
+          {...dropHandlers}
         >
           <div className="empty-icon"><UploadCloud size={30} /></div>
           <h1>选择一份 ToMemo 配置开始</h1>
@@ -158,7 +177,7 @@ export default function App() {
           <div className="privacy-note"><ShieldCheck size={14} /> 文件不会上传到服务器</div>
         </section>
       ) : (
-        <section className="workspace-grid">
+        <section className={`workspace-grid ${isDragging ? 'dragging' : ''}`} {...dropHandlers}>
           <aside className="category-pane panel">
             <div className="pane-header">
               <div><span className="eyeline">配置结构</span><h2>分类</h2></div>
@@ -267,9 +286,12 @@ export default function App() {
         <span className="status-separator" />
         <span>版本 {workspace?.configuration.version ?? '—'}</span>
         <span className="status-spacer" />
-        {workspace ? <span className="valid-status"><CheckCircle2 size={13} /> 配置结构有效</span> : <span>等待导入</span>}
+        {workspace ? (
+          workspace.warnings.length === 0
+            ? <span className="valid-status"><CheckCircle2 size={13} /> 配置结构有效</span>
+            : <span className="warning-status">版本尚未验证</span>
+        ) : <span>等待导入</span>}
       </footer>
     </main>
   )
 }
-
