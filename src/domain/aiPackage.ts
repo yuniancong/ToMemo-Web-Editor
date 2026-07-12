@@ -8,6 +8,11 @@ export type AiContentPackage = {
 
 export type AiPackageResult = { ok: true; value: AiContentPackage } | { ok: false; error: string }
 
+export const normalizeAiColor = (value?: string) => {
+  const normalized = value?.replace(/^#/, '').toUpperCase()
+  return normalized && /^[0-9A-F]{8}$/.test(normalized) ? normalized : '5A656FFF'
+}
+
 export function parseAiPackage(source: string): AiPackageResult {
   const fenced = source.match(/```(?:json)?\s*([\s\S]*?)```/i)
   const json = fenced?.[1]?.trim() ?? source.trim()
@@ -21,6 +26,8 @@ export function parseAiPackage(source: string): AiPackageResult {
   if (candidate.version !== '1.0') return { ok: false, error: '内容包 version 必须是 1.0' }
   if (typeof candidate.packageName !== 'string' || !candidate.packageName.trim()) return { ok: false, error: 'packageName 不能为空' }
   if (!Array.isArray(candidate.items) || candidate.items.length === 0) return { ok: false, error: 'items 必须是非空数组' }
+  const suggested = candidate.suggestedCategory
+  if (suggested !== undefined && (!suggested || typeof suggested !== 'object' || Array.isArray(suggested) || typeof (suggested as Record<string, unknown>).name !== 'string')) return { ok: false, error: 'suggestedCategory 必须包含字符串 name' }
   for (const [index, item] of candidate.items.entries()) {
     if (!item || typeof item !== 'object' || typeof item.title !== 'string' || typeof item.content !== 'string') {
       return { ok: false, error: `items[${index}] 必须包含字符串 title 和 content` }
@@ -28,4 +35,3 @@ export function parseAiPackage(source: string): AiPackageResult {
   }
   return { ok: true, value: candidate as AiContentPackage }
 }
-

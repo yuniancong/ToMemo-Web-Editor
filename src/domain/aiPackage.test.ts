@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { parseAiPackage } from './aiPackage'
+import { normalizeAiColor, parseAiPackage } from './aiPackage'
 
 describe('AI content package codec', () => {
   it('parses canonical and Markdown-fenced JSON', () => {
@@ -10,5 +10,11 @@ describe('AI content package codec', () => {
 
   it('returns a repairable schema error', () => {
     expect(parseAiPackage('{"format":"wrong"}')).toEqual({ ok: false, error: 'format 必须是 tomemo-content-package' })
+  })
+
+  it('accepts only verified RRGGBBAA colors', () => {
+    expect(normalizeAiColor('#4f7cffFF')).toBe('4F7CFFFF')
+    expect(normalizeAiColor('red')).toBe('5A656FFF')
+    expect(normalizeAiColor('#123')).toBe('5A656FFF')
   })
 })

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type DragEvent, type MouseEvent } from 'react'
 import { Braces, Check, CheckCircle2, ChevronDown, Clipboard, Copy, Download, FileJson, FolderOpen, Import, ListFilter, MoreHorizontal, Move, Plus, Redo2, Search, ShieldCheck, Trash2, Undo2, UploadCloud, X } from 'lucide-react'
-import { parseAiPackage, type AiContentPackage } from './domain/aiPackage'
+import { normalizeAiColor, parseAiPackage, type AiContentPackage } from './domain/aiPackage'
 import { createCategory, createNote, deleteCategory, deleteNotes, duplicateConflict, moveNotes, updateNote } from './domain/editor'
 import { exportConfiguration, parseConfiguration, rgbaHexToCss, type ToMemoConfiguration } from './domain/tomemo'
 
@@ -40,6 +40,7 @@ export default function App() {
 
   useEffect(() => { if (workspace) localStorage.setItem(STORAGE_KEY, JSON.stringify(workspace)) }, [workspace])
   const config = workspace?.configuration
+  const readOnly = !!workspace?.warnings.length
   const category = config?.categories.find((item) => item.id === categoryId)
   const note = config?.notes.find((item) => item.id === noteId)
 
@@ -54,7 +55,7 @@ export default function App() {
   }, [config, categoryId, query, sort, ascending])
 
   function commit(next: ToMemoConfiguration) {
-    if (!workspace) return
+    if (!workspace || readOnly) return
     setPast((items) => [...items.slice(-49), workspace.configuration]); setFuture([])
     setWorkspace({ ...workspace, configuration: next })
   }
@@ -79,24 +80,25 @@ export default function App() {
   }
 
   function addCategory() {
-    if (!config) return; const name = window.prompt('新分类名称'); if (!name?.trim()) return
+    if (!config || readOnly) return; const name = window.prompt('新分类名称'); if (!name?.trim()) return
     const result = createCategory(config, name.trim()); commit(result.configuration); setCategoryId(result.category.id); setNoteId(null)
   }
   function addMemo() {
-    if (!config || !categoryId) return; const result = createNote(config, categoryId, '新 Memo', ''); commit(result.configuration); setNoteId(result.note.id); setSelected(new Set([result.note.id]))
+    if (!config || !categoryId || readOnly) return; const result = createNote(config, categoryId, '新 Memo', ''); commit(result.configuration); setNoteId(result.note.id); setSelected(new Set([result.note.id]))
   }
   function removeCategory() {
-    if (!config || !categoryId || config.categories.length < 2) return
+    if (!config || !categoryId || config.categories.length < 2 || readOnly) return
     const containing = config.notes.filter((item) => item.categoryId === categoryId)
     const others = config.categories.filter((item) => item.id !== categoryId)
     const message = containing.length ? `该分类有 ${containing.length} 条 Memo。输入另一个分类名称可移动后删除；留空将连同 Memo 删除。` : '确认删除这个分类？'
     const answer = containing.length ? window.prompt(message, others[0]?.name) : (window.confirm(message) ? '' : null)
     if (answer === null) return
     const target = others.find((item) => item.name === answer)?.id
+    if (!target && containing.length && !window.confirm(`将永久删除分类及其中 ${containing.length} 条 Memo。确认继续？`)) return
     commit(deleteCategory(config, categoryId, target)); setCategoryId(others[0]?.id ?? null); setNoteId(null); setSelected(new Set())
   }
   function batchMove(copy = false) {
-    if (!config || !selected.size) return; const name = window.prompt(copy ? '复制到分类（输入名称）' : '移动到分类（输入名称）')
+    if (!config || !selected.size || readOnly) return; const name = window.prompt(copy ? '复制到分类（输入名称）' : '移动到分类（输入名称）')
     const target = config.categories.find((item) => item.name === name); if (!target) return
     commit(moveNotes(config, selected, target.id, copy)); if (!copy) setCategoryId(target.id)
   }
@@ -106,9 +108,9 @@ export default function App() {
 
   function previewAi() { const result = parseAiPackage(aiSource); if (!result.ok) { setAiError(result.error); setAiPackage(null); return } setAiError(null); setAiPackage(result.value); setAiTarget(result.value.suggestedCategory?.name ?? category?.name ?? '') }
   function importAi() {
-    if (!config || !aiPackage) return
+    if (!config || !aiPackage || readOnly) return
     let next = config; let target = next.categories.find((item) => item.name === aiTarget)
-    if (!target) { const created = createCategory(next, aiTarget || aiPackage.suggestedCategory?.name || aiPackage.packageName, aiPackage.suggestedCategory?.color?.replace('#', '').padEnd(8, 'F') || '5A656FFF'); next = created.configuration; target = created.category }
+    if (!target) { const created = createCategory(next, aiTarget || aiPackage.suggestedCategory?.name || aiPackage.packageName, normalizeAiColor(aiPackage.suggestedCategory?.color)); next = created.configuration; target = created.category }
     const existing = next.notes.filter((item) => item.categoryId === target!.id)
     for (const item of aiPackage.items) { if (duplicateConflict(item, existing).kind === 'exact') continue; next = createNote(next, target.id, item.title, item.content).configuration }
     commit(next); setCategoryId(target.id); setAiOpen(false); setAiPackage(null); setAiSource('')
@@ -122,9 +124,9 @@ export default function App() {
       <div className="toolbar-actions">
         <input ref={fileRef} className="visually-hidden" type="file" accept=".json,application/json" aria-label="导入 ToMemo 配置" onChange={(e) => { if (e.target.files?.[0]) void loadFile(e.target.files[0]); e.target.value = '' }}/>
         <button className="button secondary" onClick={() => fileRef.current?.click()}><Import size={15}/> 导入配置</button>
-        <button className="button secondary" disabled={!workspace} onClick={() => setAiOpen(true)}><FileJson size={15}/> AI 内容包</button>
+        <button className="button secondary" disabled={!workspace || readOnly} onClick={() => setAiOpen(true)}><FileJson size={15}/> AI 内容包</button>
         <button className="button secondary" disabled={!workspace} onClick={() => setValidation(!validation)}><ShieldCheck size={15}/> 校验</button>
-        <button className="button primary" disabled={!config || !!workspace?.warnings.length} onClick={() => config && download(`ToMemo-Export-${new Date().toISOString().slice(0,19).replaceAll(':','')}.json`, exportConfiguration(config))}><Download size={15}/> 导出 ToMemo</button>
+        <button className="button primary" disabled={!config || readOnly} onClick={() => { if (config && window.confirm(`将导出 ${config.categories.length} 个分类、${config.notes.length} 条 Memo。结构校验已通过，继续？`)) download(`ToMemo-Export-${new Date().toISOString().slice(0,19).replaceAll(':','')}.json`, exportConfiguration(config)) }}><Download size={15}/> 导出 ToMemo</button>
       </div>
     </header>
     {error && <div className="error-banner" role="alert">{error}</div>}
