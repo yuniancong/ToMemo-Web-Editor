@@ -61,6 +61,11 @@ export default function App() {
       return ascending ? result : -result
     })
   }, [config, categoryId, query, sort, ascending])
+  const originalSequence = useMemo(() => new Map(
+    (config?.notes ?? [])
+      .filter((item) => item.categoryId === categoryId)
+      .map((item, index) => [item.id, index + 1]),
+  ), [config, categoryId])
 
   function commit(next: ToMemoConfiguration) {
     if (!workspace || readOnly) return
@@ -196,7 +201,7 @@ export default function App() {
           {notes.map((item,index)=><Fragment key={item.id}>
             <div className={`drop-indicator ${dropIndex===index?'active':''}`} aria-hidden="true" />
             <button draggable className={`memo-row ${item.id===noteId?'selected':''} ${selected.has(item.id)?'multi-selected':''}`} onClick={(e)=>selectNote(e,item.id,index)} onDragStart={(e)=>{if(!selected.has(item.id))setSelected(new Set([item.id]));e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',item.id)}} onDragOver={(e)=>{e.preventDefault();e.dataTransfer.dropEffect='move';const rect=e.currentTarget.getBoundingClientRect();setDropIndex(e.clientY<rect.top+rect.height/2?index:index+1)}} onDrop={(e)=>{e.preventDefault();applyManualOrder(dropIndex??index,e.dataTransfer.getData('text/plain'))}} onDragEnd={()=>setDropIndex(null)} aria-label={`${item.title||'无标题'} Memo`}>
-              <span className="memo-index">{selected.has(item.id)?<Check size={13}/>:String(index+1).padStart(2,'0')}</span><span className="memo-body"><span className="memo-title">{item.title||item.content.split('\n')[0]||'无标题'}</span><span className="memo-excerpt">{item.content||'空正文'}</span><span className="memo-time">更新于 {fmt(item.updatedAt)}</span></span>
+              <span className="memo-index">{selected.has(item.id)?<Check size={13}/>:String(originalSequence.get(item.id)??index+1).padStart(2,'0')}</span><span className="memo-body"><span className="memo-title">{item.title||item.content.split('\n')[0]||'无标题'}</span><span className="memo-excerpt">{item.content||'空正文'}</span><span className="memo-time">更新于 {fmt(item.updatedAt)}</span></span>
             </button>
           </Fragment>)}
           <div className={`drop-indicator trailing ${dropIndex===notes.length?'active':''}`} onDragOver={(e)=>{e.preventDefault();setDropIndex(notes.length)}} onDrop={(e)=>{e.preventDefault();applyManualOrder(notes.length,e.dataTransfer.getData('text/plain'))}} aria-hidden="true" />

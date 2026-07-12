@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import App from './App'
+import changedFixture from './test/fixtures/changed-export.json'
 
 const fixture = {
   categories: [
@@ -107,5 +108,18 @@ describe('configuration import workflow', () => {
     editor.focus()
     expect(fireEvent.keyDown(editor, { key: 'a', metaKey: true })).toBe(true)
     expect(editor).toHaveValue('旧内容')
+  })
+
+  it('keeps the original Category sequence number in filtered search results', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await user.upload(
+      screen.getByLabelText('导入 ToMemo 配置'),
+      new File([JSON.stringify(changedFixture)], 'changed.json', { type: 'application/json' }),
+    )
+    await user.type(screen.getByPlaceholderText('搜索 Memo…'), '空正文')
+    const result = await screen.findByRole('button', { name: /空正文 Memo/ })
+    expect(result.querySelector('.memo-index')).toHaveTextContent('03')
+    expect(screen.queryByRole('button', { name: /示例命令 Memo/ })).not.toBeInTheDocument()
   })
 })
