@@ -82,6 +82,30 @@ export default function App() {
     setWorkspace({ fileName: '新建空白配置.json', configuration: created.configuration, warnings: [] })
     setPast([]); setFuture([]); setSelected(new Set()); setCategoryId(created.category.id); setNoteId(null)
   }
+  function importPastedJson() {
+    const configurationFailure = loadConfigurationSource(configText, '粘贴的配置.json')
+    if (!configurationFailure) {
+      setConfigTextOpen(false); setConfigText(''); setConfigTextError(null)
+      return
+    }
+
+    const packageResult = parseAiPackage(configText)
+    if (!packageResult.ok) {
+      setConfigTextError(`无法识别为完整 ToMemo 配置：${configurationFailure}；也无法识别为 AI 内容包：${packageResult.error}`)
+      return
+    }
+
+    if (!workspace) {
+      const blank = createBlankConfiguration()
+      setWorkspace({ fileName: 'AI 内容包新建配置.json', configuration: blank, warnings: [] })
+      setPast([]); setFuture([]); setSelected(new Set()); setCategoryId(null); setNoteId(null)
+    }
+    setAiSource(configText)
+    setAiPackage(packageResult.value)
+    setAiTarget(packageResult.value.suggestedCategory?.name ?? category?.name ?? packageResult.value.packageName)
+    setAiError(null)
+    setConfigTextOpen(false); setConfigText(''); setConfigTextError(null); setAiOpen(true)
+  }
   const drop = { onDragEnter: (e: DragEvent) => { e.preventDefault(); setDragging(true) }, onDragOver: (e: DragEvent) => e.preventDefault(), onDragLeave: () => setDragging(false), onDrop: (e: DragEvent) => { e.preventDefault(); setDragging(false); if (e.dataTransfer.files[0]) void loadFile(e.dataTransfer.files[0]) } }
 
   function selectNote(event: MouseEvent, id: string, index: number) {
@@ -138,7 +162,7 @@ export default function App() {
       <div className="toolbar-actions">
         <input ref={fileRef} className="visually-hidden" type="file" accept=".json,application/json" aria-label="导入 ToMemo 配置" onChange={(e) => { if (e.target.files?.[0]) void loadFile(e.target.files[0]); e.target.value = '' }}/>
         <button className="button secondary" onClick={() => fileRef.current?.click()}><Import size={15}/> 导入配置</button>
-        <button className="button secondary" onClick={() => setConfigTextOpen(true)}><Braces size={15}/> 粘贴配置</button>
+        <button className="button secondary" onClick={() => setConfigTextOpen(true)}><Braces size={15}/> 粘贴 JSON</button>
         <button className="button secondary" disabled={!workspace || readOnly} onClick={() => setAiOpen(true)}><FileJson size={15}/> AI 内容包</button>
         <button className="button secondary" disabled={!workspace} onClick={() => setValidation(!validation)}><ShieldCheck size={15}/> 校验</button>
         <button className="button primary" disabled={!config || readOnly} onClick={() => { if (config && window.confirm(`将导出 ${config.categories.length} 个分类、${config.notes.length} 条 Memo。结构校验已通过，继续？`)) download(`ToMemo-Export-${new Date().toISOString().slice(0,19).replaceAll(':','')}.json`, exportConfiguration(config)) }}><Download size={15}/> 导出 ToMemo</button>
@@ -155,6 +179,6 @@ export default function App() {
     </section>}
     <footer className="statusbar"><span>{countText}</span><span className="status-separator"/><span>版本 {config?.version??'—'}</span><span className="status-spacer"/>{config?<span className="valid-status"><CheckCircle2 size={13}/> 本地自动保存</span>:<span>等待导入</span>}</footer>
     {aiOpen&&<div className="modal-backdrop"><section className="modal"><header><div><span className="eyeline">AI 内容入口</span><h2>导入内容包</h2></div><button className="icon-button" onClick={()=>setAiOpen(false)}><X size={16}/></button></header><input ref={aiFileRef} type="file" className="visually-hidden" accept=".json" onChange={async(e)=>{const file=e.target.files?.[0];if(file)setAiSource(await file.text())}}/><div className="modal-toolbar"><button className="button secondary" onClick={()=>aiFileRef.current?.click()}><FolderOpen size={14}/> 上传 JSON</button><span>支持严格 JSON 与 Markdown 代码块</span></div><textarea className="ai-source" value={aiSource} onChange={(e)=>setAiSource(e.target.value)} placeholder='粘贴 tomemo-content-package JSON'/>{aiError&&<p className="modal-error" role="alert">{aiError}</p>}{aiPackage&&<div className="ai-preview"><strong>{aiPackage.packageName}</strong><span>{aiPackage.items.length} 条内容</span><label>目标分类<input value={aiTarget} onChange={(e)=>setAiTarget(e.target.value)}/></label><div className="preview-list">{aiPackage.items.map((item,i)=><div key={i}><b>{item.title||'无标题'}</b><span>{duplicateConflict(item,config!.notes).kind==='exact'?'完全重复，将跳过':item.content.slice(0,80)||'空正文'}</span></div>)}</div></div>}<footer><button className="button secondary" onClick={previewAi}>解析并预览</button><button className="button primary" disabled={!aiPackage} onClick={importAi}><Check size={14}/> 确认导入</button></footer></section></div>}
-    {configTextOpen&&<div className="modal-backdrop"><section className="modal config-text-modal"><header><div><span className="eyeline">完整配置入口</span><h2>粘贴 ToMemo JSON 配置</h2></div><button className="icon-button" onClick={()=>setConfigTextOpen(false)}><X size={16}/></button></header><div className="modal-toolbar"><span>这里接收包含 categories、notes、exportDate、version 的完整 ToMemo 配置，不是 AI 内容包。</span></div><textarea aria-label="完整 ToMemo JSON 配置" className="ai-source config-source" value={configText} onChange={(e)=>setConfigText(e.target.value)} placeholder='粘贴完整 ToMemo JSON 配置…'/>{configTextError&&<p className="modal-error" role="alert">{configTextError}</p>}<footer><button className="button secondary" onClick={()=>{setConfigText('');setConfigTextError(null)}}>清空</button><button className="button primary" disabled={!configText.trim()} onClick={()=>{const failure=loadConfigurationSource(configText,'粘贴的配置.json');if(failure){setConfigTextError(failure)}else{setConfigTextOpen(false);setConfigText('');setConfigTextError(null)}}}><Check size={14}/> 校验并导入</button></footer></section></div>}
+    {configTextOpen&&<div className="modal-backdrop"><section className="modal config-text-modal"><header><div><span className="eyeline">智能 JSON 入口</span><h2>粘贴 JSON</h2></div><button className="icon-button" onClick={()=>setConfigTextOpen(false)}><X size={16}/></button></header><div className="modal-toolbar"><span>自动识别完整 ToMemo 配置和 tomemo-content-package AI 内容包。</span></div><textarea aria-label="待导入 JSON" className="ai-source config-source" value={configText} onChange={(e)=>setConfigText(e.target.value)} placeholder='粘贴完整配置或 AI 内容包 JSON…'/>{configTextError&&<p className="modal-error" role="alert">{configTextError}</p>}<footer><button className="button secondary" onClick={()=>{setConfigText('');setConfigTextError(null)}}>清空</button><button className="button primary" disabled={!configText.trim()} onClick={importPastedJson}><Check size={14}/> 识别并继续</button></footer></section></div>}
   </main>
 }

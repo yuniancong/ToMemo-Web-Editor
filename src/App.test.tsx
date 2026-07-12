@@ -74,10 +74,26 @@ describe('configuration import workflow', () => {
   it('imports a complete ToMemo configuration pasted as JSON text', async () => {
     const user = userEvent.setup()
     render(<App />)
-    await user.click(screen.getByRole('button', { name: /粘贴配置/ }))
-    fireEvent.change(screen.getByLabelText('完整 ToMemo JSON 配置'), { target: { value: JSON.stringify(fixture) } })
-    await user.click(screen.getByRole('button', { name: /校验并导入/ }))
+    await user.click(screen.getByRole('button', { name: /粘贴 JSON/ }))
+    fireEvent.change(screen.getByLabelText('待导入 JSON'), { target: { value: JSON.stringify(fixture) } })
+    await user.click(screen.getByRole('button', { name: /识别并继续/ }))
     expect(await screen.findByText('2 个分类 · 1 条 Memo')).toBeInTheDocument()
     expect(screen.getByText('粘贴的配置.json')).toBeInTheDocument()
+  })
+
+  it('auto-detects a pasted AI content package and creates a blank workspace', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    const contentPackage = {
+      format: 'tomemo-content-package', version: '1.0', packageName: '开发指令列表',
+      suggestedCategory: { name: '开发指令', color: '4F7CFFFF' },
+      items: [{ title: '问流程', content: '/ask-matt' }],
+    }
+    await user.click(screen.getByRole('button', { name: /粘贴 JSON/ }))
+    fireEvent.change(screen.getByLabelText('待导入 JSON'), { target: { value: JSON.stringify(contentPackage) } })
+    await user.click(screen.getByRole('button', { name: /识别并继续/ }))
+    expect(await screen.findByText('开发指令列表')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('开发指令')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /确认导入/ })).toBeEnabled()
   })
 })
