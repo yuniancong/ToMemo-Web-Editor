@@ -8,6 +8,10 @@ type Workspace = { fileName: string; configuration: ToMemoConfiguration; warning
 type SortKey = 'original' | 'title' | 'createdAt' | 'updatedAt'
 const STORAGE_KEY = 'tomemo-web-editor-workspace-v1'
 const fmt = (value: string) => new Intl.DateTimeFormat('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(value))
+const isTextEditingTarget = (target: EventTarget | null) => {
+  if (!(target instanceof HTMLElement)) return false
+  return target.matches('input, textarea, select, [contenteditable="true"]') || !!target.closest('[contenteditable="true"]')
+}
 
 function download(name: string, value: unknown) {
   const url = URL.createObjectURL(new Blob([JSON.stringify(value, null, 2)], { type: 'application/json' }))
@@ -156,7 +160,7 @@ export default function App() {
   }
 
   const countText = config ? `${config.categories.length} 个分类 · ${config.notes.length} 条 Memo` : '尚未载入配置'
-  return <main className="app-shell" onKeyDown={(e) => { if ((e.metaKey || e.ctrlKey) && e.key === 'a' && config) { e.preventDefault(); setSelected(new Set(notes.map((item) => item.id))) } }}>
+  return <main className="app-shell" onKeyDown={(e) => { if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'a' && config && !isTextEditingTarget(e.target)) { e.preventDefault(); setSelected(new Set(notes.map((item) => item.id))) } }}>
     <header className="topbar">
       <div className="brand-group"><div className="brand-mark"><Braces size={17}/></div><div><div className="brand-name">ToMemo Web Editor</div><div className="workspace-name">{workspace?.fileName ?? '本地配置工作区'}</div></div></div>
       <label className="topbar-search"><Search size={15}/><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={workspace ? '搜索 Memo…' : '导入后可搜索'} disabled={!workspace}/><kbd>⌘ K</kbd></label>

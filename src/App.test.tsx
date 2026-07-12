@@ -96,4 +96,16 @@ describe('configuration import workflow', () => {
     expect(screen.getByDisplayValue('开发指令')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /确认导入/ })).toBeEnabled()
   })
+
+  it('keeps Command-A as text selection inside the AI JSON textarea', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await user.click(screen.getByRole('button', { name: /新建空白配置/ }))
+    await user.click(screen.getByRole('button', { name: /AI 内容包/ }))
+    const editor = screen.getByPlaceholderText('粘贴 tomemo-content-package JSON')
+    fireEvent.change(editor, { target: { value: '旧内容' } })
+    editor.focus()
+    expect(fireEvent.keyDown(editor, { key: 'a', metaKey: true })).toBe(true)
+    expect(editor).toHaveValue('旧内容')
+  })
 })
